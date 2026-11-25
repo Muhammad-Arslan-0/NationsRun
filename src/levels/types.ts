@@ -34,16 +34,23 @@ export function spawnMarblesGrid(
   rowSpacing = 40,
   colSpacing = 40,
 ): void {
+  // Shuffle starting grid order every round for fair, unpredictable starts
+  const shuffled = [...countries];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
   const cols = Math.max(1, Math.floor(boxWidth / colSpacing));
   const totalWidth = (cols - 1) * colSpacing;
   const leftX = cx - totalWidth / 2;
 
-  for (let i = 0; i < countries.length; i++) {
+  for (let i = 0; i < shuffled.length; i++) {
     const row = Math.floor(i / cols);
     const col = i % cols;
     const stagger = (row % 2) * (colSpacing * 0.45);
     const x = leftX + col * colSpacing + stagger - (row % 2) * (colSpacing * 0.22);
     const y = startY + row * rowSpacing;
-    world.spawnMarble(countries[i], x, y);
+    world.spawnMarble(shuffled[i], x, y);
   }
 }
