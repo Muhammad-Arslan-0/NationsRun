@@ -31,8 +31,17 @@ export class HudController {
     private readonly machine: RaceStateMachine,
     private readonly sound: SoundEngine,
   ) {
+    this.towerCollapsed = window.matchMedia('(max-width: 820px)').matches;
+    this.applyTowerCollapsedState();
     this.bindControls();
     this.machine.setHudListener((snap) => this.render(snap));
+  }
+
+  private applyTowerCollapsedState(): void {
+    this.timingTowerEl.classList.toggle('is-collapsed', this.towerCollapsed);
+    this.btnTowerToggle.textContent = this.towerCollapsed ? '+' : '−';
+    this.btnTowerToggle.setAttribute('aria-expanded', String(!this.towerCollapsed));
+    this.standingsCollapsedEl.setAttribute('aria-hidden', String(!this.towerCollapsed));
   }
 
   private bindControls(): void {
@@ -59,10 +68,7 @@ export class HudController {
     });
     this.btnTowerToggle.addEventListener('click', () => {
       this.towerCollapsed = !this.towerCollapsed;
-      this.timingTowerEl.classList.toggle('is-collapsed', this.towerCollapsed);
-      this.btnTowerToggle.textContent = this.towerCollapsed ? '+' : '−';
-      this.btnTowerToggle.setAttribute('aria-expanded', String(!this.towerCollapsed));
-      this.standingsCollapsedEl.setAttribute('aria-hidden', String(!this.towerCollapsed));
+      this.applyTowerCollapsedState();
     });
   }
 
