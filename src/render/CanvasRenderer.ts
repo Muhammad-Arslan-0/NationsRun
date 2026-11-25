@@ -108,7 +108,7 @@ export class CanvasRenderer {
       if (body.label === 'marble') continue;
       if (body.bounds.max.y < viewTop || body.bounds.min.y > viewBottom) continue;
       const meta = world.visualMeta.get(body.id);
-      if (!meta) continue;
+      if (!meta || meta.hidden) continue;
 
       if (meta.kind === 'finish') {
         this.drawFinishLine(ctx, body.position.x, body.position.y, meta.width ?? 1000, meta.height ?? 44);
@@ -118,11 +118,22 @@ export class CanvasRenderer {
       } else if (meta.kind === 'pin') {
         this.drawPin(ctx, body.position.x, body.position.y, meta.radius ?? 11);
       } else if (meta.kind === 'pendulum') {
-        this.drawPendulumBob(ctx, body.position.x, body.position.y, meta.radius ?? 42, meta.accent ?? '#00D2FF');
+        this.drawPendulumBob(
+          ctx,
+          body.position.x,
+          body.position.y,
+          meta.radius ?? 42,
+          meta.pivotX,
+          meta.pivotY,
+          meta.accent ?? '#00D2FF',
+        );
       } else {
-        this.drawStructuralBody(ctx, body, meta.kind, meta.accent);
+        this.drawStructuralBody(ctx, body, meta);
       }
     }
+
+    // Draw smooth continuous curved arches & spinner drums
+    this.drawCurveVisuals(ctx, world, viewTop, viewBottom);
 
     // Subtle motion trails
     this.drawTrails(ctx, world.marbles);
@@ -212,12 +223,115 @@ export class CanvasRenderer {
     }
   }
 
+  private drawCurveVisuals(
+    ctx: CanvasRenderingContext2D,
+    world: PhysicsWorld,
+    viewTop: number,
+    viewBottom: number,
+  ): void {
+    const curves = world.curveVisuals;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < curves.length; i++) {
+      const c = curves[i];
+      if (c.cy + c.radius + c.thickness < viewTop || c.cy - c.radius - c.thickness > viewBottom) {
+        continue;
+      }
+      const rot = c.getRotation ? c.getRotation() : 0;
+      const start = c.startRad + rot;
+      const end = c.endRad + rot;
+
+      // Soft physical shadow
+      ctx.beginPath();
+      ctx.arc(c.cx, c.cy + 5, c.radius, start, end);
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.lineWidth = c.thickness;
+      ctx.stroke();
+
+      // Outer subtle border rim
+      ctx.beginPath();
+      ctx.arc(c.cx, c.cy, c.radius, start, end);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+      ctx.lineWidth = c.thickness + 2;
+      ctx.stroke();
+
+      // Main smooth continuous body
+      ctx.beginPath();
+      ctx.arc(c.cx, c.cy, c.radius, start, end);
+      ctx.strokeStyle = c.color;
+      ctx.lineWidth = c.thickness - 1;
+      ctx.stroke();
+    }
+  }
+
   private drawStructuralBody(
     ctx: CanvasRenderingContext2D,
     body: Matter.Body,
-    kind: string,
-    accent?: string,
+    meta: { kind: string; width?: number; height?: number; rounded?: boolean; accent?: string },
   ): void {
+    const w = meta.width ?? 0;
+    const h = meta.height ?? 0;
+
+    if (w > 0 && h > 0) {
+      const r = meta.rounded ? Math.min(w, h) * 0.45 : 3;
+      const hw = w * 0.5;
+      const hh = h * 0.5;
+
+      ctx.save();
+      ctx.translate(body.position.x, body.position.y);
+      ctx.rotate(body.angle);
+
+      // Soft physical drop shadow
+      if (meta.rounded) {
+        ctx.beginPath();
+        ctx.roundRect(-hw, -hh + 5, w, h, r);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.fill();
+      }
+
+      // Main machined rail body
+      ctx.beginPath();
+      ctx.roundRect(-hw, -hh, w, h, r);
+      if (meta.kind === 'gate') {
+        ctx.fillStyle = '#33201E';
+      } else if (meta.kind === 'spinner') {
+        ctx.fillStyle = '#252836';
+      } else if (meta.kind === 'seesaw') {
+        ctx.fillStyle = '#262A38';
+      } else {
+        ctx.fillStyle = '#21252F';
+      }
+      ctx.fill();
+
+      // Subtle inner bevel highlight along top edge
+      if (meta.rounded && w > 40) {
+        ctx.beginPath();
+        ctx.roundRect(-hw + 3, -hh + 2, w - 6, Math.max(4, h * 0.32), Math.max(2, r - 2));
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+        ctx.fill();
+      }
+
+      // Clean outer edge
+      ctx.beginPath();
+      ctx.roundRect(-hw, -hh, w, h, r);
+      ctx.strokeStyle = meta.kind === 'gate' ? 'rgba(255, 87, 34, 0.7)' : 'rgba(255, 255, 255, 0.14)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Center pivot bolt for seesaws & spinners
+      if (meta.kind === 'seesaw' || (meta.kind === 'spinner' && w >= 120)) {
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#15171E';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      ctx.restore();
+      return;
+    }
+
     const verts = body.vertices;
     if (verts.length === 0) return;
 
@@ -228,35 +342,32 @@ export class CanvasRenderer {
     }
     ctx.closePath();
 
-    if (kind === 'spinner') {
-      ctx.fillStyle = '#252834';
-    } else if (kind === 'gate') {
-      ctx.fillStyle = '#2D2121';
-    } else if (kind === 'seesaw') {
-      ctx.fillStyle = '#262936';
-    } else {
-      ctx.fillStyle = '#222630';
-    }
+    ctx.fillStyle = '#21252F';
     ctx.fill();
-
-    // Clean tactile edge rather than neon outline
-    ctx.strokeStyle = kind === 'gate' ? (accent ?? '#FF5722') : '#383E4E';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
   }
 
   private drawPin(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
+    // Subtle drop shadow
+    ctx.beginPath();
+    ctx.arc(x, y + 3, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fill();
+
+    // Brushed steel peg
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = '#2C313D';
+    ctx.fillStyle = '#333947';
     ctx.fill();
-    ctx.strokeStyle = '#6B7280';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(x, y, r * 0.35, 0, Math.PI * 2);
-    ctx.fillStyle = '#D1D5DB';
+    ctx.arc(x - r * 0.2, y - r * 0.2, r * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
     ctx.fill();
   }
 
@@ -269,16 +380,27 @@ export class CanvasRenderer {
     flashing: boolean,
   ): void {
     ctx.beginPath();
+    ctx.arc(x, y + 4, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fill();
+
+    ctx.beginPath();
     ctx.arc(x, y, r + (flashing ? 3 : 0), 0, Math.PI * 2);
-    ctx.fillStyle = flashing ? '#FDE68A' : '#1E2028';
+    ctx.fillStyle = flashing ? '#FDE68A' : '#1E212A';
     ctx.fill();
     ctx.strokeStyle = flashing ? '#FFFFFF' : color;
     ctx.lineWidth = 3;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(x, y, r * 0.48, 0, Math.PI * 2);
-    ctx.fillStyle = flashing ? '#FFFFFF' : '#2D313D';
+    ctx.arc(x, y, r * 0.62, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.34, 0, Math.PI * 2);
+    ctx.fillStyle = flashing ? '#FFFFFF' : '#353B4B';
     ctx.fill();
   }
 
@@ -287,18 +409,43 @@ export class CanvasRenderer {
     x: number,
     y: number,
     r: number,
+    pivotX: number | undefined,
+    pivotY: number | undefined,
     accent: string,
   ): void {
+    // Draw suspension rod + pivot mount
+    if (pivotX !== undefined && pivotY !== undefined) {
+      ctx.beginPath();
+      ctx.moveTo(pivotX, pivotY);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(pivotX, pivotY, 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#2B303D';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y + 4, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fill();
+
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = '#1E222B';
+    ctx.fillStyle = '#20242F';
     ctx.fill();
     ctx.strokeStyle = accent;
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(x, y, r * 0.25, 0, Math.PI * 2);
+    ctx.arc(x, y, r * 0.32, 0, Math.PI * 2);
     ctx.fillStyle = '#9CA3AF';
     ctx.fill();
   }

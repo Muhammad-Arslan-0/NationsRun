@@ -42,6 +42,9 @@ export class CourseBuilder {
   ): Matter.Body {
     const safeW = Math.max(w, 28);
     const safeH = Math.max(h, 28);
+    const useRounded = meta.rounded ?? false;
+    const chamferRadius = useRounded ? Math.min(safeW, safeH) * 0.45 : 0;
+
     const body = Matter.Bodies.rectangle(x, y, safeW, safeH, {
       isStatic: true,
       angle: angleDeg * DEG2RAD,
@@ -49,6 +52,7 @@ export class CourseBuilder {
       frictionStatic: 0,
       restitution: 0.4,
       slop: 0.01,
+      ...(chamferRadius > 0 ? { chamfer: { radius: chamferRadius } } : {}),
     });
     return this.world.addStaticBody(body, {
       kind: 'wall',
@@ -56,6 +60,7 @@ export class CourseBuilder {
       accent: '#3B4257',
       width: safeW,
       height: safeH,
+      rounded: useRounded,
       ...meta,
     });
   }
@@ -65,7 +70,7 @@ export class CourseBuilder {
     y: number,
     length: number,
     angleDeg: number,
-    thickness = 30,
+    thickness = 28,
     color = '#252936',
     accent = '#7C3AED',
   ): Matter.Body {
@@ -73,6 +78,7 @@ export class CourseBuilder {
       kind: 'wall',
       color,
       accent,
+      rounded: true,
     });
   }
 
@@ -134,11 +140,12 @@ export class CourseBuilder {
     endDeg = 360,
     segments = 10,
     thickness = 28,
-    color = '#2A2F40',
+    color = '#21252F',
   ): void {
-    const step = (endDeg - startDeg) / segments;
+    const smoothSegs = Math.max(segments, 18);
+    const step = (endDeg - startDeg) / smoothSegs;
     const segLen = 2 * radius * Math.sin((Math.abs(step) * DEG2RAD) / 2) + 8;
-    for (let i = 0; i < segments; i++) {
+    for (let i = 0; i < smoothSegs; i++) {
       const midDeg = startDeg + (i + 0.5) * step;
       const rad = midDeg * DEG2RAD;
       const px = cx + Math.cos(rad) * radius;
@@ -146,13 +153,25 @@ export class CourseBuilder {
       this.addWall(px, py, segLen, thickness, midDeg + 90, {
         kind: 'wall',
         color,
-        accent: '#00D2FF',
+        hidden: true,
       });
     }
+
+    const sRad = Math.min(startDeg, endDeg) * DEG2RAD;
+    const eRad = Math.max(startDeg, endDeg) * DEG2RAD;
+    this.world.addCurveVisual({
+      cx,
+      cy,
+      radius,
+      thickness,
+      startRad: sRad,
+      endRad: eRad,
+      color,
+    });
   }
 
   /**
-   * Rotating circular drum with an exit gap, or internal paddles.
+   * Rotating circular drum with exit gaps, rendered as smooth continuous arcs.
    */
   public addSpinnerDrum(
     cx: number,
@@ -161,8 +180,8 @@ export class CourseBuilder {
     segments: number,
     openGapIndices: number[],
     angularSpeedRad: number,
-    thickness = 30,
-    color = '#7C3AED',
+    thickness = 28,
+    color = '#252836',
   ): void {
     const gapSet = new Set(openGapIndices);
     const step = (Math.PI * 2) / segments;
@@ -176,10 +195,31 @@ export class CourseBuilder {
       const py = cy + Math.sin(baseAngle) * radius;
       const b = this.addWall(px, py, segLen, thickness, (baseAngle * 180) / Math.PI + 90, {
         kind: 'spinner',
-        color: '#2A2540',
-        accent: color,
+        color,
+        hidden: true,
       });
       bodies.push({ body: b, baseAngle });
+    }
+
+    // Group contiguous non-gap segments into smooth continuous arcs
+    let runStart: number | null = null;
+    for (let i = 0; i <= segments; i++) {
+      const isOpen = i === segments || gapSet.has(i);
+      if (!isOpen && runStart === null) {
+        runStart = i;
+      } else if (isOpen && runStart !== null) {
+        this.world.addCurveVisual({
+          cx,
+          cy,
+          radius,
+          thickness,
+          startRad: (runStart - 0.5) * step,
+          endRad: (i - 0.5) * step,
+          color: '#252836',
+          getRotation: () => (this.world.elapsedMs / 1000) * angularSpeedRad,
+        });
+        runStart = null;
+      }
     }
 
     this.world.addUpdater((elapsedMs) => {
@@ -211,11 +251,13 @@ export class CourseBuilder {
       kind: 'spinner',
       color: '#2E2648',
       accent: color,
+      rounded: true,
     });
     const b2 = this.addWall(cx, cy, armLength, armThickness, 90, {
       kind: 'spinner',
       color: '#2E2648',
       accent: color,
+      rounded: true,
     });
 
     this.world.addUpdater((elapsedMs) => {
@@ -240,6 +282,7 @@ export class CourseBuilder {
       kind: 'gate',
       color: '#322220',
       accent: color,
+      rounded: true,
     });
 
     this.world.addUpdater((elapsedMs) => {
@@ -273,6 +316,8 @@ export class CourseBuilder {
       radius: bobRadius,
       color: '#1C2E3D',
       accent: color,
+      pivotX,
+      pivotY,
     });
 
     // Visual-only shaft or thin static rod? Just bob + visual rod via updater!
@@ -301,6 +346,7 @@ export class CourseBuilder {
       frictionStatic: 0,
       restitution: 0.35,
       frictionAir: 0.02,
+      chamfer: { radius: thickness * 0.45 },
     });
     this.world.addStaticBody(plank, {
       kind: 'seesaw',
@@ -308,6 +354,7 @@ export class CourseBuilder {
       height: thickness,
       color: '#2A2540',
       accent: color,
+      rounded: true,
     });
 
     const pivot = Matter.Constraint.create({

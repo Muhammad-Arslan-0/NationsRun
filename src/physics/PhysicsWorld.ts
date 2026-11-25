@@ -14,7 +14,22 @@ export interface BodyVisualMeta {
   radius?: number;
   width?: number;
   height?: number;
+  rounded?: boolean;
+  hidden?: boolean;
+  pivotX?: number;
+  pivotY?: number;
   hitFlashUntil?: number;
+}
+
+export interface CurveVisual {
+  cx: number;
+  cy: number;
+  radius: number;
+  thickness: number;
+  startRad: number;
+  endRad: number;
+  color: string;
+  getRotation?: () => number;
 }
 
 export type DynamicUpdater = (elapsedMs: number, dtMs: number) => void;
@@ -30,6 +45,7 @@ export class PhysicsWorld {
   public readonly marbles: MarbleBody[] = [];
   public readonly marbleByBodyId = new Map<number, MarbleBody>();
   public readonly visualMeta = new Map<number, BodyVisualMeta>();
+  public readonly curveVisuals: CurveVisual[] = [];
   private readonly updaters: DynamicUpdater[] = [];
   private callbacks: PhysicsCallbacks = {};
   public elapsedMs = 0;
@@ -59,6 +75,7 @@ export class PhysicsWorld {
     this.marbles.length = 0;
     this.marbleByBodyId.clear();
     this.visualMeta.clear();
+    this.curveVisuals.length = 0;
     this.updaters.length = 0;
     this.elapsedMs = 0;
     this.worldWidth = worldWidth;
@@ -69,6 +86,10 @@ export class PhysicsWorld {
     this.visualMeta.set(body.id, meta);
     Matter.Composite.add(this.engine.world, body);
     return body;
+  }
+
+  public addCurveVisual(curve: CurveVisual): void {
+    this.curveVisuals.push(curve);
   }
 
   public addConstraint(constraint: Matter.Constraint): Matter.Constraint {
