@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NationsRun — Live Broadcast</title>
+    <script type="module" crossorigin src="./assets/index-n5Ej67w_.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DTnSVkfV.css">
+  </head>
+  <body>
+    <div id="app">
+      <!-- Full-bleed physics canvas -->
+      <main id="canvas-stage" class="canvas-stage">
+        <canvas id="race-canvas"></canvas>
+
+        <!-- Top-Left: Broadcast Timing Tower (F1-style) -->
+        <aside class="timing-tower" aria-label="Live Standings">
+          <div class="tower-header">
+            <span class="tower-live-dot"></span>
+            <span id="standings-title" class="tower-title">NATIONSRUN · LIVE</span>
+            <span id="hud-counter" class="tower-counter">0/195</span>
+          </div>
+          <div id="standings-list" class="standings-list"></div>
+        </aside>
+
+        <!-- Top-Right: Compact Broadcast Bug & Controls -->
+        <header class="broadcast-bug">
+          <div class="bug-info">
+            <span id="hud-level-badge" class="bug-level">Z01/10</span>
+            <span id="hud-level-name" class="bug-name">The Spinner Drop</span>
+            <span class="bug-sep"></span>
+            <span id="hud-timer" class="bug-timer">00:00.0</span>
+            <span id="hud-status-pill" class="bug-status" data-state="live">LIVE</span>
+          </div>
+          <div class="bug-controls">
+            <button id="btn-pause" class="ctrl-btn" type="button">Pause</button>
+            <button id="btn-speed" class="ctrl-btn" type="button">1x</button>
+            <button id="btn-mute" class="ctrl-btn" type="button">Sound</button>
+            <select id="select-preset" class="ctrl-select" aria-label="Race Preset">
+              <option value="all">195 Nations</option>
+              <option value="quick48">48 Nations</option>
+            </select>
+            <button id="btn-restart" class="ctrl-btn ctrl-accent" type="button">Restart</button>
+          </div>
+        </header>
+
+        <!-- Lower-Third / Broadcast Transition Banner -->
+        <div id="transition-overlay" class="transition-overlay">
+          <div class="transition-card">
+            <div class="overlay-head">
+              <span id="overlay-tag" class="overlay-tag">STAGE 01 / 10</span>
+              <span id="overlay-sub" class="overlay-sub">Preparing grid...</span>
+            </div>
+            <h2 id="overlay-title" class="overlay-title">The Spinner Drop</h2>
+            <div id="overlay-podium" class="overlay-podium"></div>
+            <div class="overlay-bar">
+              <div id="overlay-bar-fill" class="overlay-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Boot Screen -->
+        <div id="boot-screen" class="boot-screen">
+          <div class="boot-card">
+            <div class="boot-bar"></div>
+            <div class="boot-title">NATIONSRUN</div>
+            <div id="boot-progress" class="boot-progress">Loading flags...</div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+  </body>
+</html>
