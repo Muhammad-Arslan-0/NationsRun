@@ -1,5 +1,5 @@
 import { SoundEngine } from '../audio/SoundEngine';
-import { COUNTRIES, CountryData } from '../data/countries';
+import { COUNTRIES, CountryData, PRIORITY_COUNTRY_CODES } from '../data/countries';
 import { MEGA_COURSE, MEGA_ZONES } from '../levels';
 import { ZoneMarker } from '../levels/types';
 import { CourseBuilder } from '../physics/CourseBuilder';
@@ -126,8 +126,12 @@ export class RaceStateMachine {
 
   private resetCourse(): void {
     if (this.preset === 'quick48') {
-      const step = COUNTRIES.length / 48;
-      this.activeRoster = Array.from({ length: 48 }, (_, i) => COUNTRIES[Math.floor(i * step)]);
+      const priority = COUNTRIES.filter((c) => PRIORITY_COUNTRY_CODES.has(c.code));
+      const others = COUNTRIES.filter((c) => !PRIORITY_COUNTRY_CODES.has(c.code));
+      const needed = Math.max(0, 48 - priority.length);
+      const step = others.length / Math.max(1, needed);
+      const sample = Array.from({ length: needed }, (_, i) => others[Math.floor(i * step)]);
+      this.activeRoster = [...priority, ...sample];
     } else {
       this.activeRoster = [...COUNTRIES];
     }

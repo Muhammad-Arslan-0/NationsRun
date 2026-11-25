@@ -8,6 +8,15 @@ export interface CountryData {
 }
 
 /**
+ * Priority / famous nations given front-pack randomized placement at race start.
+ */
+export const PRIORITY_COUNTRY_CODES = new Set<string>([
+  'us', 'au', 'za', 'sa', 'nz', 'ca', 'gb', 'pk', 'in', 'bd',
+  'lk', 'af', 'ae', 'tr', 'jp', 'cn', 'kr', 'br', 'ar', 'fr',
+  'de', 'it', 'es', 'pt', 'nl', 'ch', 'mx', 'id', 'eg', 'ng',
+]);
+
+/**
  * 195 UN-recognized sovereign states (193 UN members + Holy See + State of Palestine).
  * Every code corresponds to a 1:1 SVG in public/flags/{code}.svg from flag-icons.
  */
