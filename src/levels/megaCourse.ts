@@ -30,12 +30,12 @@ export const MEGA_COURSE: LevelDefinition = {
     // =========================================================================
     // ZONE 1 (y: 0 -> 2150): The Spinner Drop
     // =========================================================================
-    spawnMarblesGrid(world, countries, 600, 60, 840);
-    builder.addRamp(240, 340, 460, 26);
-    builder.addRamp(960, 340, 460, -26);
+    spawnMarblesGrid(world, countries, 600, 48, 960, 39, 39);
+    builder.addRamp(240, 420, 460, 26);
+    builder.addRamp(960, 420, 460, -26);
 
-    builder.addSpinnerDrum(600, 700, 250, 16, [3, 4, 11, 12], 0.85, 30, '#7C3AED');
-    builder.addSpinnerCross(600, 700, 210, 28, -1.1, '#00D2FF');
+    builder.addSpinnerDrum(600, 760, 250, 16, [3, 4, 11, 12], 0.85, 30, '#7C3AED');
+    builder.addSpinnerCross(600, 760, 210, 28, -1.1, '#00D2FF');
 
     builder.addRamp(230, 1100, 440, 20);
     builder.addRamp(970, 1100, 440, -20);

@@ -31,8 +31,8 @@ export function spawnMarblesGrid(
   cx: number,
   startY: number,
   boxWidth: number,
-  rowSpacing = 33,
-  colSpacing = 33,
+  rowSpacing = 40,
+  colSpacing = 40,
 ): void {
   const cols = Math.max(1, Math.floor(boxWidth / colSpacing));
   const totalWidth = (cols - 1) * colSpacing;

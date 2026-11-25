@@ -1,7 +1,7 @@
 import Matter from 'matter-js';
 import { CountryData } from '../data/countries';
 
-export const MARBLE_RADIUS = 14;
+export const MARBLE_RADIUS = 18;
 export const TRAIL_LENGTH = 8;
 
 const STUCK_CHECK_INTERVAL_MS = 2500;
