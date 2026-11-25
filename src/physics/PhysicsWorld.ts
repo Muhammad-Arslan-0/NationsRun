@@ -60,7 +60,7 @@ export class PhysicsWorld {
       constraintIterations: 4,
     });
     this.engine.gravity.x = 0;
-    this.engine.gravity.y = 0.68;
+    this.engine.gravity.y = 0.72;
     this.engine.gravity.scale = 0.001;
 
     this.bindCollisions();
@@ -200,6 +200,39 @@ export class PhysicsWorld {
             y: (dy / dist) * kick - 1.5,
           });
           this.callbacks.onBumperHit?.(other, marble, kick);
+        }
+      }
+    });
+
+    // Give marbles a smooth downhill boost when rolling/sliding on angled slopes
+    // so they never crawl sluggishly on shallow ramps while keeping freefall speed controlled.
+    Matter.Events.on(this.engine, 'collisionActive', (event) => {
+      const pairs = event.pairs;
+      for (let i = 0; i < pairs.length; i++) {
+        const { bodyA, bodyB } = pairs[i];
+        const mA = this.marbleByBodyId.get(bodyA.id);
+        const mB = this.marbleByBodyId.get(bodyB.id);
+        if (mA && mB) continue;
+
+        const marble = mA ?? mB;
+        const other = mA ? bodyB : bodyA;
+        if (!marble || !other.isStatic || other.isSensor || other.label === 'bumper') continue;
+
+        const sinA = Math.sin(other.angle);
+        if (Math.abs(sinA) < 0.08) continue; // Ignore flat/horizontal walls
+
+        const sign = sinA > 0 ? 1 : -1;
+        const tx = Math.cos(other.angle) * sign;
+        const ty = sinA * sign;
+        const vx = marble.body.velocity.x;
+        const vy = marble.body.velocity.y;
+        const alongSpeed = vx * tx + vy * ty;
+
+        if (alongSpeed < 7.5) {
+          Matter.Body.setVelocity(marble.body, {
+            x: vx + tx * 0.16,
+            y: vy + ty * 0.16,
+          });
         }
       }
     });
