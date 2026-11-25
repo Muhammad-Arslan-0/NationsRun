@@ -183,7 +183,7 @@ export class CanvasRenderer {
     worldHeight: number,
     viewTop: number,
     viewBottom: number,
-    zones: readonly ZoneMarker[],
+    _zones: readonly ZoneMarker[],
   ): void {
     // Course interior matte surface
     ctx.fillStyle = '#111318';
@@ -200,27 +200,6 @@ export class CanvasRenderer {
       ctx.lineTo(worldWidth - 40, y);
     }
     ctx.stroke();
-
-    // Zone divider lines & labels
-    for (let i = 0; i < zones.length; i++) {
-      const z = zones[i];
-      if (z.startY < viewTop || z.startY > viewBottom || z.startY === 0) continue;
-
-      ctx.strokeStyle = 'rgba(255, 87, 34, 0.35)';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([8, 6]);
-      ctx.beginPath();
-      ctx.moveTo(44, z.startY);
-      ctx.lineTo(worldWidth - 44, z.startY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = 'rgba(255, 87, 34, 0.78)';
-      ctx.font = '700 12px ui-monospace, Consolas, monospace';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(`ZONE ${String(z.id).padStart(2, '0')} — ${z.name.toUpperCase()}`, 54, z.startY - 6);
-    }
   }
 
   private drawCurveVisuals(
