@@ -7,8 +7,12 @@ export class HudController {
   private readonly statusPillEl = document.getElementById('hud-status-pill')!;
   private readonly timerEl = document.getElementById('hud-timer')!;
   private readonly counterEl = document.getElementById('hud-counter')!;
+  private readonly timingTowerEl = document.getElementById('timing-tower')!;
+  private readonly btnTowerToggle = document.getElementById('btn-tower-toggle') as HTMLButtonElement;
   private readonly standingsListEl = document.getElementById('standings-list')!;
+  private readonly standingsCollapsedEl = document.getElementById('standings-collapsed')!;
   private readonly standingsTitleEl = document.getElementById('standings-title')!;
+  private towerCollapsed = false;
 
   private readonly overlayEl = document.getElementById('transition-overlay')!;
   private readonly overlayTagEl = document.getElementById('overlay-tag')!;
@@ -52,6 +56,13 @@ export class HudController {
     this.btnRestart.addEventListener('click', () => {
       this.sound.unlock();
       this.machine.restartRun();
+    });
+    this.btnTowerToggle.addEventListener('click', () => {
+      this.towerCollapsed = !this.towerCollapsed;
+      this.timingTowerEl.classList.toggle('is-collapsed', this.towerCollapsed);
+      this.btnTowerToggle.textContent = this.towerCollapsed ? '+' : '−';
+      this.btnTowerToggle.setAttribute('aria-expanded', String(!this.towerCollapsed));
+      this.standingsCollapsedEl.setAttribute('aria-hidden', String(!this.towerCollapsed));
     });
   }
 
@@ -129,6 +140,15 @@ export class HudController {
       })
       .join('');
     this.standingsListEl.innerHTML = html;
+
+    // Update collapsed top-3 flags row
+    this.standingsCollapsedEl.innerHTML = entries
+      .slice(0, 3)
+      .map(
+        (entry, idx) =>
+          `<img class="collapsed-flag rank-${idx + 1}" src="./flags/${entry.country.code}.svg" alt="${entry.country.name}" title="#${idx + 1} ${entry.country.name}" />`,
+      )
+      .join('');
   }
 
   private renderPodium(podium: StandingEntry[]): void {

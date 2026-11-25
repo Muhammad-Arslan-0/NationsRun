@@ -51,7 +51,73 @@ body,
   border-radius: 4px;
   overflow: hidden;
   z-index: 10;
-  pointer-events: none;
+  pointer-events: auto;
+  transition: width 0.15s ease;
+}
+
+.timing-tower.is-collapsed {
+  width: auto;
+  min-width: 124px;
+}
+
+.timing-tower.is-collapsed .tower-title,
+.timing-tower.is-collapsed .tower-counter,
+.timing-tower.is-collapsed .standings-list {
+  display: none;
+}
+
+.tower-toggle {
+  background: transparent;
+  border: 1px solid var(--border-hair);
+  color: var(--text-muted);
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.tower-toggle:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.standings-collapsed {
+  display: none;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.timing-tower.is-collapsed .standings-collapsed {
+  display: flex;
+}
+
+.collapsed-flag {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+}
+
+.collapsed-flag.rank-1 {
+  border-color: #fbbf24;
+}
+
+.collapsed-flag.rank-2 {
+  border-color: #e5e7eb;
+}
+
+.collapsed-flag.rank-3 {
+  border-color: #d97706;
 }
 
 .tower-header {

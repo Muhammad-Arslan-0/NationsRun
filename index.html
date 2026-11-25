@@ -12,13 +12,15 @@
         <canvas id="race-canvas"></canvas>
 
         <!-- Top-Left: Broadcast Timing Tower (F1-style) -->
-        <aside class="timing-tower" aria-label="Live Standings">
+        <aside id="timing-tower" class="timing-tower" aria-label="Live Standings">
           <div class="tower-header">
             <span class="tower-live-dot"></span>
             <span id="standings-title" class="tower-title">NATIONSRUN · LIVE</span>
             <span id="hud-counter" class="tower-counter">0/195</span>
+            <button id="btn-tower-toggle" class="tower-toggle" type="button" title="Collapse / Expand" aria-expanded="true">−</button>
           </div>
           <div id="standings-list" class="standings-list"></div>
+          <div id="standings-collapsed" class="standings-collapsed" aria-hidden="true"></div>
         </aside>
 
         <!-- Top-Right: Compact Broadcast Bug & Controls -->
