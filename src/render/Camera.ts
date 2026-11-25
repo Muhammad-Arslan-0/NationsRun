@@ -19,9 +19,11 @@ export class Camera {
   }
 
   private computeBaseZoom(worldWidth: number, viewportWidth: number, _viewportHeight: number): number {
-    // Fit worldWidth cleanly into viewport with slight margin
     const fitW = (viewportWidth * 0.96) / worldWidth;
-    return Math.max(0.38, Math.min(1.15, fitW));
+    // On narrow mobile screens, keep zoom >= 0.76 so flags & barriers stay large and readable
+    // while horizontal camera panning follows the action.
+    const minZoom = viewportWidth < 760 ? 0.76 : 0.45;
+    return Math.max(minZoom, Math.min(1.15, fitW));
   }
 
   public update(
@@ -40,13 +42,17 @@ export class Camera {
     let sumX = 0;
     let count = 0;
     let maxY = -Infinity;
+    let leaderX = worldWidth * 0.5;
 
     // Single pass: find maxY of active marbles first (zero allocations)
     for (let i = 0; i < marbles.length; i++) {
       const m = marbles[i];
       if (!m.finished && !m.eliminated) {
         const py = m.body.position.y;
-        if (py > maxY) maxY = py;
+        if (py > maxY) {
+          maxY = py;
+          leaderX = m.body.position.x;
+        }
       }
     }
 
@@ -69,13 +75,14 @@ export class Camera {
     if (count > 0) {
       const packY = sumY / count;
       const packX = sumX / count;
+      const focusX = viewportWidth < 760 ? packX * 0.35 + leaderX * 0.65 : packX * 0.5 + leaderX * 0.5;
       // Bias slightly ahead of pack so upcoming obstacles are clearly visible
       this.targetY = packY + 110;
       // Subtle horizontal pan only if viewport is narrower than world at zoom
       const visibleW = viewportWidth / this.zoom;
       if (visibleW < worldWidth - 20) {
         const halfVis = visibleW * 0.5;
-        this.targetX = Math.max(halfVis, Math.min(worldWidth - halfVis, packX));
+        this.targetX = Math.max(halfVis, Math.min(worldWidth - halfVis, focusX));
       } else {
         this.targetX = worldWidth * 0.5;
       }
