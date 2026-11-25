@@ -71,8 +71,8 @@ export class CourseBuilder {
     length: number,
     angleDeg: number,
     thickness = 28,
-    color = '#252936',
-    accent = '#7C3AED',
+    color = '#2A364B',
+    accent = '#4B6082',
   ): Matter.Body {
     return this.addWall(x, y, length, thickness, angleDeg, {
       kind: 'wall',
@@ -140,7 +140,7 @@ export class CourseBuilder {
     endDeg = 360,
     segments = 10,
     thickness = 28,
-    color = '#21252F',
+    color = '#243B4A',
   ): void {
     const smoothSegs = Math.max(segments, 18);
     const step = (endDeg - startDeg) / smoothSegs;
@@ -215,7 +215,7 @@ export class CourseBuilder {
           thickness,
           startRad: (runStart - 0.5) * step,
           endRad: (i - 0.5) * step,
-          color: '#252836',
+          color: '#342A54',
           getRotation: () => (this.world.elapsedMs / 1000) * angularSpeedRad,
         });
         runStart = null;

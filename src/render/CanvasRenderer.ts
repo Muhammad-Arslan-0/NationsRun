@@ -83,7 +83,7 @@ export class CanvasRenderer {
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
     // Matte studio background
-    ctx.fillStyle = '#0B0C10';
+    ctx.fillStyle = '#0A0D14';
     ctx.fillRect(0, 0, this.viewW, this.viewH);
 
     // Apply camera transform
@@ -185,16 +185,24 @@ export class CanvasRenderer {
     viewBottom: number,
     _zones: readonly ZoneMarker[],
   ): void {
-    // Course interior matte surface
-    ctx.fillStyle = '#111318';
+    // Deep slate-navy studio backdrop with subtle side-vignette rails
+    ctx.fillStyle = '#121621';
     ctx.fillRect(0, 0, worldWidth, worldHeight);
+
+    ctx.fillStyle = 'rgba(8, 10, 16, 0.35)';
+    ctx.fillRect(40, 0, 36, worldHeight);
+    ctx.fillRect(worldWidth - 76, 0, 36, worldHeight);
 
     const startY = Math.max(0, Math.floor(viewTop / 200) * 200);
     const endY = Math.min(worldHeight, viewBottom);
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.045)';
     ctx.lineWidth = 1;
     ctx.beginPath();
+    for (let x = 160; x < worldWidth; x += 160) {
+      ctx.moveTo(x, startY);
+      ctx.lineTo(x, endY);
+    }
     for (let y = startY; y <= endY; y += 200) {
       ctx.moveTo(40, y);
       ctx.lineTo(worldWidth - 40, y);
@@ -245,7 +253,7 @@ export class CanvasRenderer {
   private drawStructuralBody(
     ctx: CanvasRenderingContext2D,
     body: Matter.Body,
-    meta: { kind: string; width?: number; height?: number; rounded?: boolean; accent?: string },
+    meta: { kind: string; width?: number; height?: number; rounded?: boolean; color?: string; accent?: string },
   ): void {
     const w = meta.width ?? 0;
     const h = meta.height ?? 0;
@@ -271,13 +279,15 @@ export class CanvasRenderer {
       ctx.beginPath();
       ctx.roundRect(-hw, -hh, w, h, r);
       if (meta.kind === 'gate') {
-        ctx.fillStyle = '#33201E';
+        ctx.fillStyle = '#4A2521';
       } else if (meta.kind === 'spinner') {
-        ctx.fillStyle = '#252836';
+        ctx.fillStyle = '#342A54';
       } else if (meta.kind === 'seesaw') {
-        ctx.fillStyle = '#262A38';
+        ctx.fillStyle = '#2F3D52';
+      } else if (meta.rounded) {
+        ctx.fillStyle = meta.color ?? '#2A364B';
       } else {
-        ctx.fillStyle = '#21252F';
+        ctx.fillStyle = '#1B202C';
       }
       ctx.fill();
 
@@ -292,7 +302,16 @@ export class CanvasRenderer {
       // Clean outer edge
       ctx.beginPath();
       ctx.roundRect(-hw, -hh, w, h, r);
-      ctx.strokeStyle = meta.kind === 'gate' ? 'rgba(255, 87, 34, 0.7)' : 'rgba(255, 255, 255, 0.14)';
+      ctx.strokeStyle =
+        meta.kind === 'gate'
+          ? 'rgba(255, 87, 34, 0.72)'
+          : meta.kind === 'spinner'
+            ? 'rgba(139, 92, 246, 0.45)'
+            : meta.kind === 'seesaw'
+              ? 'rgba(56, 189, 248, 0.45)'
+              : meta.rounded
+                ? 'rgba(148, 163, 184, 0.32)'
+                : 'rgba(255, 255, 255, 0.1)';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
